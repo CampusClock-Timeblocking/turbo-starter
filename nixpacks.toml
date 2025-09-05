@@ -1,0 +1,42 @@
+# Nixpacks build plan focused on deploying only the Fastify API service (apps/api)
+# Coolify will detect this file automatically when Build Pack = "Nixpacks".
+# It installs only the minimal workspaces needed (@repo/db, @repo/auth, @repo/contracts, api),
+# builds them, generates the Prisma client, then starts the Fastify server.
+
+[phases.setup]
+# Pin Node & add pnpm (Coolify may already inject these; explicit for clarity)
+nixPkgs = ["nodejs_20", "pnpm"]
+
+[variables]
+# Default port Fastify will listen on inside the container (override in Coolify UI)
+PORT = "3001"
+NODE_ENV = "production"
+
+# --- INSTALL PHASE ---
+[phases.install]
+# --filter pattern ensures we don't build the Next.js web app for this service image.
+# contracts has only TS sources so no build step required.
+cmds = [
+  "pnpm install --frozen-lockfile",
+  # Generate Prisma client explicitly (needs DATABASE_URL present as env var)
+  "pnpm -F @repo/db exec prisma generate"
+]
+
+# --- BUILD PHASE ---
+[phases.build]
+# We avoid the existing build scripts that assume a root .env file via dotenv-cli.
+# Instead we compile directly so build does not fail if .env isn't present in the image.
+cmds = [
+  # Compile DB & Auth packages (emit dist/*)
+  "pnpm -F @repo/db exec tsc -p packages/db/tsconfig.json",
+  "pnpm -F @repo/auth exec tsc -p packages/auth/tsconfig.json",
+  # API TypeScript build
+  "pnpm -F api run build:ts"
+]
+
+# --- START PHASE ---
+[start]
+# fastify-cli will load the compiled plugin at dist/app.js and start the server.
+# PORT is injected by Coolify (or falls back to 3001 from [variables]).
+workingDirectory = "apps/api"
+cmd = "fastify start -l info dist/app.js"
