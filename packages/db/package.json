@@ -21,7 +21,8 @@
         "dist"
     ],
     "scripts": {
-        "build": "dotenv -e ../../.env -- pnpm prisma:generate && tsc",
+    "build": "dotenv -e ../../.env -- pnpm prisma:generate && pnpm run build:ts",
+    "build:ts": "tsc",
         "dev": "tsc --watch",
         "clean": "rm -rf dist",
         "check-types": "tsc --noEmit",

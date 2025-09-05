@@ -17,9 +17,7 @@ NODE_ENV = "production"
 # --filter pattern ensures we don't build the Next.js web app for this service image.
 # contracts has only TS sources so no build step required.
 cmds = [
-  "pnpm install --frozen-lockfile",
-  # Generate Prisma client explicitly (needs DATABASE_URL present as env var)
-  "pnpm -F @repo/db exec prisma generate"
+  "pnpm install --frozen-lockfile"
 ]
 
 # --- BUILD PHASE ---
@@ -27,10 +25,12 @@ cmds = [
 # We avoid the existing build scripts that assume a root .env file via dotenv-cli.
 # Instead we compile directly so build does not fail if .env isn't present in the image.
 cmds = [
-  # Compile DB & Auth packages (emit dist/*)
-  "pnpm -F @repo/db exec tsc -p packages/db/tsconfig.json",
+  # Ensure Prisma client is generated before TypeScript compile
+  "pnpm -F @repo/db exec prisma generate",
+  # Build DB (tsc) and Auth first (they publish dist consumed by api)
+  "pnpm -F @repo/db exec pnpm run build:ts",
   "pnpm -F @repo/auth exec tsc -p packages/auth/tsconfig.json",
-  # API TypeScript build
+  # Finally build API
   "pnpm -F api run build:ts"
 ]
 
@@ -40,3 +40,7 @@ cmds = [
 # PORT is injected by Coolify (or falls back to 3001 from [variables]).
 workingDirectory = "apps/api"
 cmd = "fastify start -l info dist/app.js"
+
+# Optional: uncomment to run migrations automatically before start (ensure principle of idempotence)
+# [start.pre]
+# cmds = ["pnpm -F @repo/db exec prisma migrate deploy"]
