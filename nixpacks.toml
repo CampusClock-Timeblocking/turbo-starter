@@ -14,34 +14,28 @@ NODE_ENV = "production"
 
 # --- INSTALL PHASE ---
 [phases.install]
-# Keep workspace install at repo root so packages resolve correctly
 cmds = [
   "pnpm install --frozen-lockfile"
 ]
 
 # --- BUILD PHASE ---
 [phases.build]
-# Build order matters: generate Prisma first, dann TS-Builds der Packages, dann API.
 cmds = [
-  # Ensure Prisma client is generated before TypeScript compile
+  # Generate Prisma client first
   "pnpm -F @repo/db exec prisma generate",
 
-  # Build DB (tsc) and Auth first (they publish dist consumed by api)
+  # Build DB + Auth packages (they publish dist consumed by api)
   "pnpm -F @repo/db exec pnpm run build:ts",
-
-  # IMPORTANT: run inside the package; use local path (NOT packages/auth/...)
   "pnpm -F @repo/auth exec tsc -p tsconfig.json",
 
-  # Finally build API
+  # Build the API
   "pnpm -F api run build:ts"
 ]
 
 # --- START PHASE ---
 [start]
-# fastify-cli will load the compiled plugin at dist/app.js and start the server.
-# PORT is injected by Coolify (or falls back to 3001 from [variables]).
 workingDirectory = "apps/api"
-cmd = "fastify start -l info dist/app.js"
+cmd = "node dist/app.js"
 
 # --- OPTIONAL: Run DB migrations automatically before start ---
 # Uncomment if you want migrations during startup (idempotent in CI/CD)
