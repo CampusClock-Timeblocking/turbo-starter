@@ -34,8 +34,8 @@ cmds = [
 
 # --- START PHASE ---
 [start]
-workingDirectory = "apps/api"
-cmd = "node dist/app.js"
+# Important: use absolute path inside /app, not workingDirectory
+cmd = "node apps/api/dist/app.js"
 
 # --- OPTIONAL: Run DB migrations automatically before start ---
 # Uncomment if you want migrations during startup (idempotent in CI/CD)
