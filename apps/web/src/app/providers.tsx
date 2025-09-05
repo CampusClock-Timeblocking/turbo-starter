@@ -18,15 +18,18 @@ export function Providers({ children }: { children: ReactNode }) {
             <tsr.ReactQueryProvider>
                 <AuthUIProvider
                     authClient={authClient}
-                    
                     navigate={router.push}
-                    baseURL={process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001'}
+                    baseURL={'http://localhost:3001'}
                     replace={router.replace}
                     onSessionChange={() => {
                         // Clear router cache (protected routes)
                         router.refresh();
                     }}
                     Link={Link}
+                    social={{
+                        providers: ['notion'],
+                    }}
+                    credentials={false}
                 >
                     {children}
                 </AuthUIProvider>

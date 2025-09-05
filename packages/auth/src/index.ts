@@ -7,9 +7,13 @@ export const auth = betterAuth({
         provider: 'postgresql', // or "mysql", "postgresql", ...etc
     }),
 
-    trustedOrigins: ['http://localhost:3000'],
-    emailAndPassword: {
-        enabled: true,
-        disableSignUp: false,
+    trustedOrigins: [process.env.NEXT_PUBLIC_API_URL!, 'http://localhost:3001'],
+    socialProviders: {
+        notion: {
+            enabled: true,
+            clientId: process.env.NOTION_CLIENT_ID!,
+            clientSecret: process.env.NOTION_CLIENT_SECRET!,
+            redirectUri: process.env.NOTION_REDIRECT_URI!,
+        },
     },
 }) as ReturnType<typeof betterAuth>;
